@@ -1,14 +1,10 @@
 from dotenv import load_dotenv
-from IPython.display import display, Audio
-from PIL import Image
 from moviepy.editor import VideoFileClip, AudioFileClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from openai import OpenAI
 
 import cv2
 import base64
-import time
-import io
 import os
 import requests
 import tempfile
