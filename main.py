@@ -6,8 +6,6 @@ import base64
 import os
 import requests
 import tempfile
-import string
-import random
 import wave
 import librosa
 
@@ -16,7 +14,6 @@ import streamlit as st
 import numpy as np
 import soundfile as sf
 
-from pywinauto import Desktop
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -31,7 +28,7 @@ def window_capture(window_name, fps, record_seconds, display_container):
     base64Frames = []
     for i in range(int(record_seconds * fps)):
         tic = time.perf_counter()
-        # make a screenshot
+
         img = pyautogui.screenshot(region=(w.left, w.top, w.width, w.height))
         display_container.image(img)
 
@@ -54,8 +51,8 @@ def frames_to_story(base64Frames, prompt):
             "role": "user",
             "content": [
                 prompt,
-                *map(lambda x: {"image": x, "resize": 768},
-                     base64Frames[0::10]),
+                *map(lambda x: {"image": x, "resize": 512},
+                     base64Frames),
             ],
         },
     ]
@@ -71,7 +68,7 @@ def frames_to_story(base64Frames, prompt):
     return result.choices[0].message.content
 
 
-def text_to_audio(text):
+def text_to_audio(text, voice):
     response = requests.post(
         "https://api.openai.com/v1/audio/speech",
         headers={
@@ -80,7 +77,7 @@ def text_to_audio(text):
         json={
             "model": "tts-1",
             "input": text,
-            "voice": "onyx",
+            "voice": voice,
         },
     )
 
@@ -114,11 +111,9 @@ def autoplay_audio(file_path: str, audio_container):
         x,_ = librosa.load(file_path, sr=16000)
         sf.write('tmp.wav', x, 16000)
         time.sleep(get_duration_wave('tmp.wav'))
+        os.remove("tmp.wav")
         audio_container.empty()
 
-
-def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
 
 def get_duration_wave(file_path):
    with wave.open(file_path, 'r') as audio_file:
@@ -132,19 +127,19 @@ def main():
     st.set_page_config(page_title="AI Live Commentary", page_icon=":loudspeaker:")
     st.header("AI Live Commentary :loudspeaker:")
 
-    # Window selectbox
+    # Options with UI
     window_titles = list(filter(lambda title: title.strip(), map(lambda window: window.title, pyautogui.getAllWindows())))
     window_name = st.selectbox('Select window to capture:', window_titles)
+    voice = st.selectbox('Select voice:', ("alloy", "echo", "fable", "onyx", "nova", "shimmer"))
+    prompt = st.text_area("Prompt:", value="Provide exciting commentary!")
     
-    prompt = st.text_area(
-        "Prompt:", value="Provide exciting commentary!")
-    
-    fps = 10
+    fps = 1
     record_seconds = 5
     est_word_count = record_seconds * 2
     final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds, so make sure the response is less than {est_word_count} words)"
+    # final_prompt = prompt + f"(Make sure the response is less than 10 words.)"
     
-    if st.button('Begin!', type="primary") and window_name is not None and final_prompt is not None:
+    if st.button('Begin!', type="primary") and window_name is not None and prompt is not None:
         with st.spinner('Processing...'):
             vision_container = st.empty()
             text_container = st.empty()
@@ -154,7 +149,7 @@ def main():
                 base64Frames = window_capture(window_name, fps, record_seconds, vision_container)
                 text = frames_to_story(base64Frames, final_prompt)
                 text_container.write(text)
-                audio_filename = text_to_audio(text)
+                audio_filename = text_to_audio(text, voice)
                 autoplay_audio(audio_filename, audio_container)
                 if break_botton:
                     break
