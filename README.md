@@ -17,7 +17,7 @@ This application is designed to capture frames of a specified window, continuous
 - Select the window to capture.
 - Choose a voice for the narration.
 - Enter a prompt for generating the story.
-- Click the "Begin!" button to start capturing frames and generating the story.
+- Click the "Begin!" button to start capturing frames and generating commentary.
 - Click the "Stop" button to end the process.
 
 ## Dependencies
