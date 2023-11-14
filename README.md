@@ -40,7 +40,8 @@ The script depends on the following Python packages:
 - dotenv
 
 ## Note
-Provide appropriate prompts for generating the story.
+- Currently Windows is the only supported platform
+- Provide appropriate prompts for generating the desired narration.
 
 For further details, refer to the `main.py` file for the complete code.
 
