@@ -16,6 +16,7 @@ import streamlit as st
 import numpy as np
 import soundfile as sf
 
+from pywinauto import Desktop
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -108,6 +109,8 @@ def autoplay_audio(file_path: str, audio_container):
             md,
             unsafe_allow_html=True,
         )
+        
+        #Time delay until audio finishes playing
         x,_ = librosa.load(file_path, sr=16000)
         sf.write('tmp.wav', x, 16000)
         time.sleep(get_duration_wave('tmp.wav'))
@@ -126,18 +129,20 @@ def get_duration_wave(file_path):
 
 # Streamlit UI
 def main():
-    st.set_page_config(page_title="Window Capture", page_icon=":camera_with_flash:")
+    st.set_page_config(page_title="AI Live Commentary", page_icon=":loudspeaker:")
+    st.header("AI Live Commentary :loudspeaker:")
 
-    st.header("Window Capture :camera_with_flash:")
-    window_name = st.text_area(
-            "Window Name:", value="Enter the Name of the window you wish to capture.")
+    # Window selectbox
+    window_titles = list(filter(lambda title: title.strip(), map(lambda window: window.title, pyautogui.getAllWindows())))
+    window_name = st.selectbox('Select window to capture:', window_titles)
     
     prompt = st.text_area(
         "Prompt:", value="Provide exciting commentary!")
     
+    fps = 10
     record_seconds = 5
     est_word_count = record_seconds * 2
-    final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds long, so make sure the response is less than {est_word_count} words)"
+    final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds, so make sure the response is less than {est_word_count} words)"
     
     if st.button('Begin!', type="primary") and window_name is not None and final_prompt is not None:
         with st.spinner('Processing...'):
@@ -146,7 +151,7 @@ def main():
             audio_container = st.empty()
             break_botton = st.button('Stop', type="primary")
             while(True):
-                base64Frames = window_capture(window_name, 10, record_seconds, vision_container)
+                base64Frames = window_capture(window_name, fps, record_seconds, vision_container)
                 text = frames_to_story(base64Frames, final_prompt)
                 text_container.write(text)
                 audio_filename = text_to_audio(text)
