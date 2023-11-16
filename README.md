@@ -9,9 +9,9 @@ This application is designed to capture frames of a specified window, continuous
 - **Streamlit UI**: Provides a user interface for interacting with the script.
 
 ## Usage
-1. Requirements: Install the necessary Python packages
-2. Add your OpenAI API key: Create a `.env` file in the root directory and add your key with `OPENAI_API_KEY = "Your Key"`
-3. Run the script: `streamlit run main.py`
+1. Requirements: Install the necessary Python packages by running `pip install -r requirements.txt`.
+2. Add your OpenAI API key: Create a `.env` file in the root directory and add your key with `OPENAI_API_KEY = "Your Key"`.
+3. Run the script: `streamlit run main.py`.
 
 ### Streamlit UI
 - Select the window to capture.
