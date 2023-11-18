@@ -16,7 +16,7 @@ import soundfile as sf
 
 from openai import OpenAI
 from dotenv import load_dotenv
-from my_component import my_component
+from screen_capture import screen_capture
 
 load_dotenv()
 
@@ -128,7 +128,7 @@ def main():
     st.set_page_config(page_title="AI Live Commentary", page_icon=":loudspeaker:")
 
     st.subheader("Component with constant args")
-    num_clicks = my_component("World")
+    num_clicks = screen_capture("World")
     st.markdown("You've clicked %s times!" % int(num_clicks))
 
     st.markdown("---")

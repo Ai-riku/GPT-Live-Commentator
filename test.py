@@ -18,7 +18,7 @@ import soundfile as sf
 
 from openai import OpenAI
 from dotenv import load_dotenv
-from my_component import my_component
+from screen_capture import screen_capture
 
 load_dotenv()
 
