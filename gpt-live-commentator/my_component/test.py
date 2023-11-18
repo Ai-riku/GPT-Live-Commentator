@@ -18,6 +18,7 @@ import soundfile as sf
 
 from openai import OpenAI
 from dotenv import load_dotenv
+from my_component import my_component
 
 load_dotenv()
 

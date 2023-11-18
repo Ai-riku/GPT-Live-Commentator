@@ -16,6 +16,7 @@ import soundfile as sf
 
 from openai import OpenAI
 from dotenv import load_dotenv
+from my_component import my_component
 
 load_dotenv()
 
@@ -125,6 +126,14 @@ def get_duration_wave(file_path):
 # Streamlit UI
 def main():
     st.set_page_config(page_title="AI Live Commentary", page_icon=":loudspeaker:")
+
+    st.subheader("Component with constant args")
+    num_clicks = my_component("World")
+    st.markdown("You've clicked %s times!" % int(num_clicks))
+
+    st.markdown("---")
+    
+    # Actual Page 
     st.header("AI Live Commentary :loudspeaker:")
 
     # Options with UI
