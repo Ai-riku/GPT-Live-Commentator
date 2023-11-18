@@ -8,6 +8,7 @@ import requests
 import tempfile
 import wave
 import librosa
+import threading
 
 import pygetwindow as gw
 import streamlit as st
@@ -23,9 +24,18 @@ from streamlit_webrtc import (
     create_mix_track
 )
 
-load_dotenv()
+lock = threading.Lock()
 
-def window_capture(window_name, fps, record_seconds, display_container):
+load_dotenv()
+img_container = {"img": None}
+
+def video_frame_callback(frame):
+    img = frame.to_ndarray(format="bgr24")
+    with lock:
+        img_container["img"] = img
+    return frame
+
+def window_capture(self_ctx, window_name, fps, record_seconds, display_container):
     # seach and activate window
     w = gw.getWindowsWithTitle(window_name)[0]
     if w.isActive == False:
@@ -34,12 +44,18 @@ def window_capture(window_name, fps, record_seconds, display_container):
     base64Frames = []
     for i in range(int(record_seconds * fps)):
         tic = time.perf_counter()
-
-        img = pyautogui.screenshot(region=(w.left, w.top, w.width, w.height))
+        
+        with lock:
+            img = img_container["img"]
+        if img is None:
+            continue
+        #img = pyautogui.screenshot(region=(w.left, w.top, w.width, w.height))
         display_container.image(img)
 
         # convert img to numpy array to work with OpenCV
+        
         frame = np.array(img)
+        
         _, buffer = cv2.imencode(".jpg", frame)
         base64Frames.append(base64.b64encode(buffer).decode("utf-8"))
 
@@ -152,6 +168,7 @@ def main():
         mode=WebRtcMode.SENDRECV,
         rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
         media_stream_constraints={"video": True, "audio": True},
+        video_frame_callback=video_frame_callback,
         sendback_audio=False,
     )
     self_process_track = None
@@ -163,7 +180,7 @@ def main():
             audio_container = st.empty()
             break_botton = st.button('Stop', type="primary")
             while(True):
-                base64Frames = window_capture(window_name, fps, record_seconds, vision_container)
+                base64Frames = window_capture(self_ctx, window_name, fps, record_seconds, vision_container)
                 text = frames_to_story(base64Frames, final_prompt)
                 text_container.write(text)
                 audio_filename = text_to_audio(text, voice)
