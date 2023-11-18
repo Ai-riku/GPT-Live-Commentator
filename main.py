@@ -16,7 +16,12 @@ import soundfile as sf
 
 from openai import OpenAI
 from dotenv import load_dotenv
-from screen_capture import screen_capture
+
+from streamlit_webrtc import (
+    WebRtcMode,
+    webrtc_streamer,
+    create_mix_track
+)
 
 load_dotenv()
 
@@ -127,12 +132,6 @@ def get_duration_wave(file_path):
 def main():
     st.set_page_config(page_title="AI Live Commentary", page_icon=":loudspeaker:")
 
-    st.subheader("Component with constant args")
-    num_clicks = screen_capture("World")
-    st.markdown("You've clicked %s times!" % int(num_clicks))
-
-    st.markdown("---")
-    
     # Actual Page 
     st.header("AI Live Commentary :loudspeaker:")
 
@@ -147,7 +146,16 @@ def main():
     est_word_count = record_seconds * 2
     final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds, so make sure the response is less than {est_word_count} words)"
     # final_prompt = prompt + f"(Make sure the response is less than 10 words.)"
-    
+    # Streamlit RTC    
+    self_ctx = webrtc_streamer(
+        key="self",
+        mode=WebRtcMode.SENDRECV,
+        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+        media_stream_constraints={"video": True, "audio": True},
+        sendback_audio=False,
+    )
+    self_process_track = None
+
     if st.button('Begin!', type="primary") and window_name is not None and prompt is not None:
         with st.spinner('Processing...'):
             vision_container = st.empty()
