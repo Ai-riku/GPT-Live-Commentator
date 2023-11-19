@@ -35,21 +35,11 @@ def video_frame_callback(frame):
         img_container["img"] = img
     return frame
 
-def window_capture(self_ctx, window_name, fps, record_seconds, display_container):
-    # seach and activate window
-    w = gw.getWindowsWithTitle(window_name)[0]
-    if w.isActive == False:
-        pywinauto.application.Application().connect(handle=w._hWnd).top_window().set_focus()
-
+def window_capture(img, fps, record_seconds, display_container):
     base64Frames = []
     for i in range(int(record_seconds * fps)):
         tic = time.perf_counter()
         
-        with lock:
-            img = img_container["img"]
-        if img is None:
-            continue
-        #img = pyautogui.screenshot(region=(w.left, w.top, w.width, w.height))
         display_container.image(img)
 
         # convert img to numpy array to work with OpenCV
@@ -172,21 +162,28 @@ def main():
         sendback_audio=False,
     )
     self_process_track = None
-
-    if st.button('Begin!', type="primary") and window_name is not None and prompt is not None:
+    
+    st.subheader("AI Processed Image")
+    vision_container = st.empty()
+    while self_ctx.state.playing and prompt is not None:
+        with lock:
+            img = img_container["img"]
+        if img is None:
+            continue
+        #vision_container = st.empty()
         with st.spinner('Processing...'):
-            vision_container = st.empty()
+            #vision_container = st.empty()
             text_container = st.empty()
             audio_container = st.empty()
-            break_botton = st.button('Stop', type="primary")
-            while(True):
-                base64Frames = window_capture(self_ctx, window_name, fps, record_seconds, vision_container)
-                text = frames_to_story(base64Frames, final_prompt)
-                text_container.write(text)
-                audio_filename = text_to_audio(text, voice)
-                autoplay_audio(audio_filename, audio_container)
-                if break_botton:
-                    break
+            #break_botton = st.button('Stop', type="primary")
+            #while(True):
+            base64Frames = window_capture(img, fps, record_seconds, vision_container)
+            text = frames_to_story(base64Frames, final_prompt)
+            text_container.write(text)
+            audio_filename = text_to_audio(text, voice)
+            autoplay_audio(audio_filename, audio_container)
+            #if break_botton:
+                #break
 
 
 if __name__ == '__main__':
