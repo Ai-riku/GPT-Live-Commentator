@@ -18,7 +18,7 @@ import soundfile as sf
 from openai import OpenAI
 from dotenv import load_dotenv
 
-from streamlit_webrtc import (
+from streamlit_webrtc_display_capture import (
     WebRtcMode,
     webrtc_streamer,
     create_mix_track
