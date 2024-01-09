@@ -38,11 +38,7 @@ The script depends on the following Python packages:
 - soundfile
 - openai
 - dotenv
-<<<<<<< HEAD
 - streamlit_webrtc_display_capture (modified version from streamlit_webrtc)
-=======
-- streamlit_webrtc_display_capture
->>>>>>> 80ee32a587635eed4c8406c4b517f7d06974a517
 
 ## Note
 - Currently Windows is the only supported platform
