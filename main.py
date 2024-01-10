@@ -1,5 +1,4 @@
 import cv2
-import pyautogui
 import time
 import base64
 import os
@@ -141,8 +140,6 @@ def main():
     st.header("AI Live Commentary :loudspeaker:")
 
     # Options with UI
-    window_titles = list(filter(lambda title: title.strip(), map(lambda window: window.title, pyautogui.getAllWindows())))
-    window_name = st.selectbox('Select window to capture:', window_titles)
     voice = st.selectbox('Select voice:', ("alloy", "echo", "fable", "onyx", "nova", "shimmer"))
     prompt = st.text_area("Prompt:", value="Provide exciting commentary!")
     
