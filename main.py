@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 from streamlit_webrtc_display_capture import (
     WebRtcMode,
+    RTCConfiguration,
     webrtc_streamer,
     create_mix_track
 )
@@ -148,10 +149,34 @@ def main():
     final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds, so make sure the response is less than {est_word_count} words)"
     # final_prompt = prompt + f"(Make sure the response is less than 10 words.)"
     # Streamlit RTC    
+    try:
+        # Custom ICE Server
+        urls = os.environ["ICE_SERVER"]
+        username = os.environ["USER"]
+        credential = os.environ["PASS"]
+        rtc_configuration = RTCConfiguration(
+            {
+            "iceServers": [{
+                "urls": [urls],
+                "username": username,
+                "credential": credential,
+            }]
+        })
+    except KeyError:
+        # Fallback option if no ICE server is provided
+        # May or may not work in some network environments
+        rtc_configuration = RTCConfiguration(
+        {
+            "iceServers": [{
+                "urls": ["stun:stun.l.google.com:19302"],
+            }]
+        }   
+    )
+
     self_ctx = webrtc_streamer(
         key="self",
         mode=WebRtcMode.SENDRECV,
-        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+        rtc_configuration=rtc_configuration,
         media_stream_constraints={"video": True, "audio": True},
         video_frame_callback=video_frame_callback,
         sendback_audio=False,
