@@ -11,6 +11,8 @@ This application is designed to capture frames of a specified window, continuous
 ## Usage
 1. Requirements: Install the necessary Python packages by running `pip install -r requirements.txt`. Install the custom display capture component with `cd packages` and `pip install streamlit_webrtc_display_capture-0.47.1.tar.gz`
 2. Add your OpenAI API key: Create a `.env` file in the root directory and add your key with `OPENAI_API_KEY = "Your Key"`.
+2a. (Optional) Setup a TURN server and add the parameters inside the `.env` file: `ICE_SERVER = "Ice Server"; USER = "User"; PASS = "Password"` each in their seperate lines.
+    A fallback option is provided where the script will use a free STUN server from google, which may or may not work in some network environments.
 3. Run the script in root folder: `streamlit run main.py`.
 
 ### Streamlit UI
@@ -31,7 +33,6 @@ The script depends on the following Python packages:
 - tempfile
 - wave
 - librosa
-- pygetwindow
 - streamlit
 - numpy
 - soundfile
