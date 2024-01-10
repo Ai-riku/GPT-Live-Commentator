@@ -8,7 +8,6 @@ import wave
 import librosa
 import threading
 
-import pygetwindow as gw
 import streamlit as st
 import numpy as np
 import soundfile as sf
