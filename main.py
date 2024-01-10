@@ -1,6 +1,5 @@
 import cv2
 import pyautogui
-import pywinauto
 import time
 import base64
 import os

@@ -24,7 +24,6 @@ This application is designed to capture frames of a specified window, continuous
 The script depends on the following Python packages:
 - cv2
 - pyautogui
-- pywinauto
 - time
 - base64
 - os

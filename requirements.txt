@@ -5,7 +5,6 @@ opencv_python==4.8.0.76
 PyAutoGUI==0.9.54
 PyGetWindow==0.0.9
 python-dotenv==1.0.0
-pywinauto==0.6.8
 Requests==2.31.0
 soundfile==0.12.1
 streamlit==1.28.1
