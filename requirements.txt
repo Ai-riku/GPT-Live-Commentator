@@ -9,4 +9,3 @@ Requests==2.31.0
 soundfile==0.12.1
 streamlit==1.28.1
 packages/streamlit_webrtc_display_capture-0.47.1.tar.gz
-libgl1-mesa-glx
