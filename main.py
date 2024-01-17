@@ -193,13 +193,13 @@ def main():
         #vision_container = st.empty()
         with st.spinner('Processing...'):
             #vision_container = st.empty()
-            text_container = st.empty()
             audio_container = st.empty()
             #break_botton = st.button('Stop', type="primary")
             #while(True):
             base64Frames = window_capture(img, fps, record_seconds, vision_container)
             text = frames_to_story(base64Frames, final_prompt)
-            text_container.write(text)
+            with st.chat_message("assistant"):
+                st.write(text)
             audio_filename = text_to_audio(text, voice)
             autoplay_audio(audio_filename, audio_container)
             #if break_botton:
