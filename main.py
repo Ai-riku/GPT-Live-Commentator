@@ -1,30 +1,11 @@
-import cv2
-import time
-import base64
-import os
-import requests
-import tempfile
-import wave
-import librosa
 import threading
-
+import time
 import streamlit as st
-import numpy as np
-import soundfile as sf
 
-from openai import OpenAI
-from dotenv import load_dotenv
-
-from streamlit_webrtc_display_capture import (
-    WebRtcMode,
-    RTCConfiguration,
-    webrtc_streamer,
-    create_mix_track
-)
+from openai_utils import *
+from utils import *
 
 lock = threading.Lock()
-
-load_dotenv()
 img_container = {"img": None}
 
 def video_frame_callback(frame):
@@ -33,177 +14,60 @@ def video_frame_callback(frame):
         img_container["img"] = img
     return frame
 
-def window_capture(img, fps, record_seconds, display_container):
-    base64Frames = []
-    for i in range(int(record_seconds * fps)):
-        tic = time.perf_counter()
-        
-        display_container.image(img)
-
-        # convert img to numpy array to work with OpenCV
-        
-        frame = np.array(img)
-        
-        _, buffer = cv2.imencode(".jpg", frame)
-        base64Frames.append(base64.b64encode(buffer).decode("utf-8"))
-
-        # Add delay to ensure frames are captured at the desired fps
-        toc = time.perf_counter()
-        while (toc - tic) < 1/fps:
-            toc = time.perf_counter()
-    
-    return base64Frames
-
-
-def frames_to_story(base64Frames, prompt):
-    PROMPT_MESSAGES = [
-        {
-            "role": "user",
-            "content": [
-                prompt,
-                *map(lambda x: {"image": x, "resize": 512},
-                     base64Frames),
-            ],
-        },
-    ]
-    params = {
-        "model": "gpt-4-vision-preview",
-        "messages": PROMPT_MESSAGES,
-        "max_tokens": 500,
-    }
-
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    result = client.chat.completions.create(**params)
-    print(result.choices[0].message.content)
-    return result.choices[0].message.content
-
-
-def text_to_audio(text, voice):
-    response = requests.post(
-        "https://api.openai.com/v1/audio/speech",
-        headers={
-            "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}",
-        },
-        json={
-            "model": "tts-1",
-            "input": text,
-            "voice": voice,
-        },
-    )
-
-    if response.status_code != 200:
-        raise Exception("Request failed with status code")
-
-    # Save audio to a temporary file
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmpfile:
-        for chunk in response.iter_content(chunk_size=1024 * 1024):
-            tmpfile.write(chunk)
-        audio_filename = tmpfile.name
-
-    return audio_filename
-
-
-def autoplay_audio(file_path: str, audio_container):
-    with open(file_path, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode()
-        md = f"""
-            <audio controls autoplay="true">
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """
-        audio_container.markdown(
-            md,
-            unsafe_allow_html=True,
-        )
-        
-        #Time delay until audio finishes playing
-        x,_ = librosa.load(file_path, sr=16000)
-        sf.write('tmp.wav', x, 16000)
-        time.sleep(get_duration_wave('tmp.wav'))
-        os.remove("tmp.wav")
-        audio_container.empty()
-
-
-def get_duration_wave(file_path):
-   with wave.open(file_path, 'r') as audio_file:
-      frame_rate = audio_file.getframerate()
-      n_frames = audio_file.getnframes()
-      duration = n_frames / float(frame_rate)
-      return duration
-
 # Streamlit UI
 def main():
-    st.set_page_config(page_title="AI Live Commentary", page_icon=":loudspeaker:")
+    st.set_page_config(
+        page_title="AI Live Commentary", 
+        page_icon=":loudspeaker:",
+        initial_sidebar_state='collapsed'
+    )
 
-    # Actual Page 
     st.header("AI Live Commentary :loudspeaker:")
 
     # Options with UI
-    voice = st.selectbox('Select voice:', ("alloy", "echo", "fable", "onyx", "nova", "shimmer"))
-    prompt = st.text_area("Prompt:", value="Provide exciting commentary!")
-    
-    fps = 1
-    record_seconds = 5
-    est_word_count = record_seconds * 2
-    final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds, so make sure the response is less than {est_word_count} words)"
-    # final_prompt = prompt + f"(Make sure the response is less than 10 words.)"
-    # Streamlit RTC    
-    try:
-        # Custom ICE Server
-        urls = os.environ["ICE_SERVER"]
-        username = os.environ["USER"]
-        credential = os.environ["PASS"]
-        rtc_configuration = RTCConfiguration(
-            {
-            "iceServers": [{
-                "urls": [urls],
-                "username": username,
-                "credential": credential,
-            }]
-        })
-    except KeyError:
-        # Fallback option if no ICE server is provided
-        # May or may not work in some network environments
-        rtc_configuration = RTCConfiguration(
-        {
-            "iceServers": [{
-                "urls": ["stun:stun.l.google.com:19302"],
-            }]
-        }   
-    )
+    if "prompt" not in st.session_state:
+        st.session_state["prompt"] = "Provide exciting commentary!"
+    prompt_input = st.text_area("Prompt:", value=st.session_state["prompt"], placeholder="Enter prompt for commentary or to generate prompt", )
+    prompt = prompt_input
+    if st.button("Generate prompt") and prompt is not None:
+        with st.spinner('Generating...'):
+            st.session_state["prompt"] = prompt_to_text(prompt)
 
-    self_ctx = webrtc_streamer(
-        key="self",
-        mode=WebRtcMode.SENDRECV,
-        rtc_configuration=rtc_configuration,
-        media_stream_constraints={"video": True, "audio": True},
-        video_frame_callback=video_frame_callback,
-        sendback_audio=False,
-    )
-    self_process_track = None
+    with st.sidebar:
+        voice = st.selectbox('Select voice:', ("alloy", "echo", "fable", "onyx", "nova", "shimmer"))
+        commentary_delay = st.number_input("Delay between commentary:", value=0)
+        record_seconds = st.number_input("Seconds per input video:", value=5)
+        fps = st.number_input("Frames captured per second:", value=1)
+        est_word_count = st.number_input("Estimated word count:", value=10)
     
-    st.subheader("AI Processed Image")
+    # webrtc_streamer
+    self_ctx = get_webrtc_streamer(video_frame_callback)
+    
+    # Display
+    text_container = st.empty()
+    audio_container = st.empty()
+    aiImageHeader = st.empty()
     vision_container = st.empty()
     while self_ctx.state.playing and prompt is not None:
-        with lock:
-            img = img_container["img"]
-        if img is None:
+        if img_container["img"] is None:
             continue
-        #vision_container = st.empty()
         with st.spinner('Processing...'):
-            #vision_container = st.empty()
-            audio_container = st.empty()
-            #break_botton = st.button('Stop', type="primary")
-            #while(True):
-            base64Frames = window_capture(img, fps, record_seconds, vision_container)
-            text = frames_to_story(base64Frames, final_prompt)
-            with st.chat_message("assistant"):
-                st.write(text)
+            final_prompt = prompt + f"(The text is meant to be read out over only {record_seconds} seconds, so make sure the response is less than {est_word_count} words)"
+            aiImageHeader.subheader("AI Processed Images")
+            images, base64Frames = window_capture(img_container, fps, record_seconds)
+            with vision_container:
+                st.image(images, width=130)
+            try:
+                text = frames_to_story(base64Frames, final_prompt)
+            except Exception as e:
+                print(e)
+                continue
+            with text_container: 
+                with st.chat_message("assistant"):
+                    st.write(text)
             audio_filename = text_to_audio(text, voice)
             autoplay_audio(audio_filename, audio_container)
-            #if break_botton:
-                #break
+            time.sleep(commentary_delay)
 
 
 if __name__ == '__main__':
