@@ -73,37 +73,29 @@ def get_duration_wave(file_path):
    
 def get_webrtc_streamer(video_frame_callback):
     # Streamlit RTC    
-    # try:
-    #     # Custom ICE Server
-    #     urls = os.environ["ICE_SERVER"]
-    #     username = os.environ["USER"]
-    #     credential = os.environ["PASS"]
-    #     rtc_configuration = RTCConfiguration(
-    #         {
-    #         "iceServers": [{
-    #             "urls": [urls],
-    #             "username": username,
-    #             "credential": credential,
-    #         }]
-    #     })
-    # except KeyError:
-    #     # Fallback option if no ICE server is provided
-    #     # May or may not work in some network environments
-    #     rtc_configuration = RTCConfiguration(
-    #         {
-    #             "iceServers": [{
-    #                 "urls": ["stun:stun.l.google.com:19302"],
-    #             }]
-    #         }   
-    #     )
-
-    rtc_configuration = RTCConfiguration(
-        {
-            "iceServers": [{
-                "urls": ["stun:stun.l.google.com:19302"],
-            }]
-        }   
-    )
+    try:
+         # Custom ICE Server
+         urls = os.environ["ICE_SERVER"]
+         username = os.environ["USER"]
+         credential = os.environ["PASS"]
+         rtc_configuration = RTCConfiguration(
+             {
+             "iceServers": [{
+                 "urls": [urls],
+                 "username": username,
+                 "credential": credential,
+             }]
+         })
+    except KeyError:
+         # Fallback option if no ICE server is provided
+         # May or may not work in some network environments
+         rtc_configuration = RTCConfiguration(
+             {
+                 "iceServers": [{
+                     "urls": ["stun:stun.l.google.com:19302"],
+                 }]
+             }   
+         )
 
     self_ctx = webrtc_streamer(
         key="self",

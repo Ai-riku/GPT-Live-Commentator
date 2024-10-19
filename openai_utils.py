@@ -18,7 +18,7 @@ def frames_to_story(base64Frames, prompt):
         },
     ]
     params = {
-        "model": "gpt-4-vision-preview",
+        "model": "gpt-4o",
         "messages": PROMPT_MESSAGES,
         "max_tokens": 500,
     }
